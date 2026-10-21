@@ -1,5 +1,6 @@
 -- Objective: Analyze revenue trends by month, quarter, and year
 
+
 -- 1. Monthly Revenue Trends
 SELECT
     TO_CHAR(TRUNC(ORDER_DATE, 'MM'), 'YYYY') AS YEAR,
