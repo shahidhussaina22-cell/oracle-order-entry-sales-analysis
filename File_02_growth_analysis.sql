@@ -1,7 +1,5 @@
--- Project: Oracle OE Sales Analysis
--- File: 
-
--- 1. Month-over-Month (MoM) Revenue Growth
+--Project: Oracle OE Sales Analysis
+--1. Month-over-Month (MoM) Revenue Growth
 
 WITH date_bounds AS (
     SELECT
