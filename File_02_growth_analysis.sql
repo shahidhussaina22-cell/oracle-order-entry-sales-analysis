@@ -1,0 +1,80 @@
+-- Project: Oracle OE Sales Analysis
+-- File: 
+
+-- 1. Month-over-Month (MoM) Revenue Growth
+
+WITH date_bounds AS (
+    SELECT
+        TRUNC(MIN(ORDER_DATE), 'MM') AS FIRST_MONTH,
+        TRUNC(MAX(ORDER_DATE), 'MM') AS LAST_MONTH
+    FROM OE.ORDERS
+),
+month_calendar AS (
+    SELECT
+        ADD_MONTHS(FIRST_MONTH, LEVEL - 1) AS MONTH_START
+    FROM date_bounds
+    CONNECT BY LEVEL <=
+        MONTHS_BETWEEN(LAST_MONTH, FIRST_MONTH) + 1
+),
+monthly_revenue AS (
+    SELECT
+        C.MONTH_START,
+        NVL(SUM(O.ORDER_TOTAL), 0) AS TOTAL_REVENUE
+    FROM month_calendar C
+    LEFT JOIN OE.ORDERS O
+        ON O.ORDER_DATE >= C.MONTH_START
+       AND O.ORDER_DATE < ADD_MONTHS(C.MONTH_START, 1)
+    GROUP BY C.MONTH_START
+),
+revenue_comparison AS (
+    SELECT
+        MONTH_START,
+        TOTAL_REVENUE,
+        LAG(TOTAL_REVENUE) OVER (
+            ORDER BY MONTH_START
+        ) AS PREVIOUS_MONTH_REVENUE
+    FROM monthly_revenue
+)
+SELECT
+    TO_CHAR(MONTH_START, 'YYYY') AS YEAR,
+    TO_CHAR(MONTH_START, 'FMMonth') AS MONTH,
+    TOTAL_REVENUE,
+    COALESCE(PREVIOUS_MONTH_REVENUE,0) AS PREVIOUS_MONTH_REVENUE,
+    COALESCE(ROUND(
+        (TOTAL_REVENUE - PREVIOUS_MONTH_REVENUE)
+        / NULLIF(PREVIOUS_MONTH_REVENUE, 0) * 100,
+        2
+    ),0) AS MOM_GROWTH_PERCENT
+FROM revenue_comparison
+ORDER BY MONTH_START;
+
+
+-- 2. Year-over-Year (YoY) Revenue Growth
+
+WITH yearly_revenue AS (
+    SELECT
+        TRUNC(ORDER_DATE, 'YYYY') AS YEAR_START,
+        SUM(ORDER_TOTAL) AS TOTAL_REVENUE
+    FROM OE.ORDERS
+    GROUP BY TRUNC(ORDER_DATE, 'YYYY')
+),
+revenue_comparison AS (
+    SELECT
+        YEAR_START,
+        TOTAL_REVENUE,
+        LAG(TOTAL_REVENUE) OVER (
+            ORDER BY YEAR_START
+        ) AS PREVIOUS_YEAR_REVENUE
+    FROM yearly_revenue
+)
+SELECT
+    TO_CHAR(YEAR_START, 'YYYY') AS YEAR,
+    ROUND(TOTAL_REVENUE, 2) AS TOTAL_REVENUE,
+    COALESCE(ROUND(PREVIOUS_YEAR_REVENUE, 2),0) AS PREVIOUS_YEAR_REVENUE,
+    COALESCE(ROUND(
+        (TOTAL_REVENUE - PREVIOUS_YEAR_REVENUE)
+        / NULLIF(PREVIOUS_YEAR_REVENUE, 0) * 100,
+        2
+    ),0) AS YOY_GROWTH_PERCENT
+FROM revenue_comparison
+ORDER BY YEAR_START;
