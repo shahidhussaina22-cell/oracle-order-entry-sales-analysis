@@ -1,5 +1,3 @@
--- Project: Oracle OE Sales Analysis
--- 
 -- Objective: Analyze revenue trends by month, quarter, and year
 
 -- 1. Monthly Revenue Trends
