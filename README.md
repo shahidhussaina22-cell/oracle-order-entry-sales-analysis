@@ -26,12 +26,12 @@ This project focuses on analyzing sales performance and customer behavior using 
 oracle-order-entry-sales-analysis/
 ├── README.md
 └── sql/
-    ├── 01_revenue_trend_analysis.sql
-    ├── 02_growth_analysis.sql
-    ├── 03_order_mode_analysis.sql
-    ├── 04_customer_rfm_analysis.sql
-    ├── 05_product_category_analysis.sql
-    └── 06_pareto_80_20_analysis.sql
+    ├── File_01_revenue_trend_analysis.sql
+    ├── File_02_growth_analysis.sql
+    ├── File_03_order_mode_analysis.sql
+    ├── File_04_customer_rfm_analysis.sql
+    ├── File_05_product_category_analysis.sql
+    └── File_06_pareto_80_20_analysis.sql
 ```
 
 ## Database
