@@ -1,0 +1,52 @@
+-- Project: Oracle OE Sales Analysis
+-- File: 06_pareto_80_20_analysis.sql
+-- Objective: Identify products contributing to cumulative revenue
+
+WITH product_revenue AS (
+    SELECT
+        O.PRODUCT_ID,
+        P.PRODUCT_NAME,
+        SUM(O.UNIT_PRICE * O.QUANTITY) AS TOTAL_REVENUE
+    FROM OE.ORDER_ITEMS O
+    JOIN OE.PRODUCT_INFORMATION P
+        ON O.PRODUCT_ID = P.PRODUCT_ID
+    GROUP BY
+        O.PRODUCT_ID,
+        P.PRODUCT_NAME
+),
+cumulative_revenue AS (
+    SELECT
+        PRODUCT_ID,
+        PRODUCT_NAME,
+        TOTAL_REVENUE,
+
+        SUM(TOTAL_REVENUE) OVER (
+            ORDER BY TOTAL_REVENUE DESC, PRODUCT_ID
+            ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+        ) AS CUMULATIVE_REVENUE,
+
+        SUM(TOTAL_REVENUE) OVER () AS OVERALL_REVENUE
+
+    FROM product_revenue
+)
+SELECT
+    PRODUCT_ID,
+    PRODUCT_NAME,
+    ROUND(TOTAL_REVENUE, 2) AS TOTAL_REVENUE,
+    ROUND(CUMULATIVE_REVENUE, 2) AS CUMULATIVE_REVENUE,
+
+    ROUND(
+        CUMULATIVE_REVENUE
+        / NULLIF(OVERALL_REVENUE, 0) * 100,
+        2
+    ) AS CUMULATIVE_REVENUE_PERCENT,
+
+    CASE
+        WHEN CUMULATIVE_REVENUE
+             / NULLIF(OVERALL_REVENUE, 0) * 100 <= 80
+            THEN 'WITHIN 80% REVENUE'
+        ELSE 'REMAINING REVENUE'
+    END AS REVENUE_SEGMENT
+
+FROM cumulative_revenue
+ORDER BY TOTAL_REVENUE DESC, PRODUCT_ID;
